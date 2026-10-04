@@ -1,0 +1,1 @@
+"""Auto Game integration package."""
