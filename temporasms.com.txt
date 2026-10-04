@@ -1,0 +1,28 @@
+WEBSITE = https://temporasms.com/
+
+Introduction
+TemporaSMS provides SMS verification tools for teams and products. The API lets you request virtual numbers, poll for incoming OTP codes, and manage wallet balances programmatically.
+
+Compatibility Note
+
+Usage is subject to platform rules, rate limits, our Terms, and the Acceptable Use Policy.
+
+All API requests should be sent to https://api.temporasms.com/stubs/handler_api.php via POST or GET methods.
+
+API KEY = 4886507db9a85fe9352c0eeecf83f5bbbd43
+
+GET BALANCE = https://api.temporasms.com/stubs/handler_api.php?api_key=$api_key&action=getBalance
+
+GET OPERATOR = https://api.temporasms.com/stubs/handler_api.php?api_key=$api_key&action=getOperators
+
+GET PHONE NUMBET = https://api.temporasms.com/stubs/handler_api.php?api_key=$api_key&action=getNumber&service=$service&country=$country&operator
+
+GET SMS = https://api.temporasms.com/stubs/handler_api.php?api_key=$api_key&action=getStatus&id=$id
+
+CHANGE REQUEST = https://api.temporasms.com/stubs/handler_api.php?api_key=$api_key&action=setStatus&status=$status&id=$id
+
+GET CURRENT PRICE  https://api.temporasms.com/stubs/handler_api.php?api_key=$api_key&action=getPrices&country=$country&operator=$operator
+
+GET LIST OF ALL COUMTRY = https://api.temporasms.com/stubs/handler_api.php?api_key=$api_key&action=getCountries&operator=$operator
+
+GET LIST OF ALL SERVICES = https://api.temporasms.com/stubs/handler_api.php?api_key=$api_key&action=getServices&operator=$operator
