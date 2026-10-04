@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SPYEYE Quantum Control Panel - Mobile</title>
+    <link rel="stylesheet" href="/shared/common.css">
+    <link rel="stylesheet" href="/mobile/css/mobile.css?v=home-v9">
+</head>
+<body>
+
+    <div class="header">
+        <div class="menu-btn" onclick="openMenu()">☰</div>
+        <div class="title" id="lblNavTitle">📊 Live Analytics</div>
+        <div class="header-clock" id="headerClock">
+            <div class="clock-time">00:00:00 AM</div>
+            <div class="clock-date">01 January 2026</div>
+        </div>
+    </div>
+
+    <div class="backdrop" id="backdrop" onclick="closeMenu()"></div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="close-btn" onclick="closeMenu()">×</div>
+        <a onclick="showPage('home', '🏠 Home')">🏠 Home Control Unit</a>
+        <a class="active" onclick="showPage('live', '📊 Live Analytics')">📊 Live Runtime Analytics</a>
+        <a onclick="openPopup('errors', '🚨 Realtime Engine Error Logs')">🚨 Realtime Engine Error Logs</a>
+        <a onclick="openPopup('health', '❤️ Live System Diagnostic Health')">❤️ Live System Diagnostic Health</a>
+        <a onclick="openSpyEyeAccountModal()">🔑 SPYEYE Account Info</a>
+        <a onclick="openSpyEyeHistoryModal()">📜 SPYEYE Server History</a>
+        <a onclick="openGameSequenceModal()">🎮 Game Sequence</a>
+        <a onclick="openOtpHistoryModal()">📩 OTP History (Number-Wise)</a>
+        <a onclick="openPopup('registration-summary', '📈 Registration Summary')">📈 Registration Summary</a>
+        <a onclick="openPopup('analytics', '📊 Performance Analytics Matrix')">📊 Performance Analytics Matrix</a>
+        <a onclick="openPopup('timeline', '📜 Live Activity Timeline (IST)')">📜 Live Activity Timeline (IST)</a>
+</div>
+
+    <div class="mobile-bottom-nav">
+        <div class="mobile-bottom-nav-item" onclick="showPage('home','🏠 Home')"><span>🏠</span>Home</div>
+        <div class="mobile-bottom-nav-item" onclick="showPage('live','📊 Live')"><span>📊</span>Live</div>
+        <div class="mobile-bottom-nav-item" onclick="openSpyEyeHistoryModal()"><span>📜</span>History</div>
+        <div class="mobile-bottom-nav-item" onclick="openOtpHistoryModal()"><span>📩</span>OTP</div>
+        <div class="mobile-bottom-nav-item" onclick="openMenu()"><span>☰</span>More</div>
+    </div>
+
+    <div id="popupModal" class="modal" onclick="closePopupOutside(event)">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="popupTitle">Popup Details</h3>
+                <span class="modal-close" onclick="closePopup()">×</span>
+            </div>
+            <div class="modal-body" id="popupBody"></div>
+        </div>
+    </div>
+
+    <div id="modalTemplates" style="display: none;">
+        <div id="temp-stream" class="realtime-thread-view">
+            <div class="rt-hero">
+                <div class="rt-hero-main">
+                    <div class="rt-icon">👥</div>
+                    <div>
+                        <div class="rt-title">Realtime Active Thread</div>
+                        <div class="rt-live-line"><span class="rt-live-dot"></span> Live Monitoring</div>
+                        <div class="rt-subtitle">Track all active workers in real-time</div>
+                    </div>
+                </div>
+                <div class="rt-active-chip"><span class="rt-pulse">〽</span><div><b id="rtActiveWorkers">0 Active</b><small>Workers Running</small></div></div>
+            </div>
+
+            <div class="rt-stat-grid">
+                <div class="rt-stat rt-blue"><span class="rt-stat-icon">✓</span><div><b id="rtStatActive">0</b><small>Success Count</small></div></div>
+                <div class="rt-stat rt-green"><span class="rt-stat-icon">⟳</span><div><b id="rtStatThreads">0/0</b><small>Total Threads</small></div></div>
+                <div class="rt-stat rt-purple"><span class="rt-stat-icon">◷</span><div><b id="rtStatOtp">--</b><small>Avg. OTP Time</small></div></div>
+                <div class="rt-stat rt-orange"><span class="rt-stat-icon">▮</span><div><b id="rtStatStatus">Online</b><small>System Status</small></div></div>
+            </div>
+
+            <div class="rt-workers" id="workerCards">
+                <p class="rt-empty">No active parallel tasks running.</p>
+            </div>
+
+            <div class="rt-footer">
+                <div class="rt-info"><span>ⓘ</span><div><b>Workers are processing in real-time</b><small>Data updates automatically every second</small></div></div>
+                <div class="rt-refresh"><span>⟳</span> Auto Refresh <span class="rt-toggle"><i></i></span></div>
+            </div>
+
+            <div class="rt-legacy-table" style="display:none;">
+                <table><thead><tr><th>Worker</th><th>Phone</th><th>Status</th><th>Balance</th></tr></thead><tbody id="streamTableBody"></tbody></table>
+            </div>
+        </div>
+        
+        <div id="temp-success">
+            <h4 style="font-size: 11px; color: #34d399; text-transform: uppercase; margin-bottom: 10px; font-weight: 800;">📋 OTP Received — Latest First</h4>
+            <div class="table-responsive">
+                <table><thead><tr><th>Time</th><th>Phone</th><th>Registered Game(s)</th><th>OTP</th><th>Balance</th><th>Live</th></tr></thead><tbody id="successTableBody"></tbody></table>
+            </div>
+        </div>
+
+        <div id="temp-already">
+            <div class="table-responsive">
+                <table><thead><tr><th>Phone Number</th><th>Queue Status & Countdown</th></tr></thead><tbody id="alreadyTableBody"></tbody></table>
+            </div>
+        </div>
+
+        <div id="temp-cancel">
+            <div style="font-size:11px;color:#64748b;margin-bottom:8px;">Only confirmed successful releases are shown here.</div>
+            <div class="table-responsive">
+                <table><thead><tr><th>Time</th><th>Phone Number</th><th>Status</th><th>Provider</th><th>Attempts</th><th>Response</th></tr></thead><tbody id="cancelTableBody"></tbody></table>
+            </div>
+        </div>
+
+        <div id="temp-cancel-failed">
+            <div style="font-size:11px;color:#64748b;margin-bottom:8px;">Cancellation attempts that did not receive a confirmed success response.</div>
+            <div class="table-responsive">
+                <table><thead><tr><th>Time</th><th>Phone Number</th><th>Status</th><th>Provider</th><th>Attempts</th><th>Response</th></tr></thead><tbody id="cancelFailedTableBody"></tbody></table>
+            </div>
+        </div>
+
+        <div id="temp-delayed-cancel">
+            <div class="table-responsive">
+                <table><thead><tr><th>Phone Number</th><th>Delayed Cancel Countdown</th><th>Status</th></tr></thead><tbody id="delayedCancelTableBody"></tbody></table>
+            </div>
+        </div>
+        
+        <div id="temp-account-info">
+            <div id="accountInfoContent" class="premium-account-info"><div class="premium-account-loading">Loading account info...</div></div>
+        </div>
+
+        <div id="temp-registration-summary">
+            <div class="table-responsive" style="max-height:300px; overflow-y:auto;">
+                <table><thead><tr><th>Game Identifier</th><th>Total Success</th></tr></thead>
+                <tbody id="modalRegistrationSummaryBody"><tr><td colspan="2" style="color:#64748b;">Waiting...</td></tr></tbody></table>
+            </div>
+        </div>
+
+        <div id="temp-timeline">
+            <div class="timeline-container" id="modalTimelineBody">
+                <div style="color:#64748b; padding:10px; text-align:center;">Waiting...</div>
+            </div>
+        </div>
+
+        <div id="temp-analytics">
+            <div class="table-responsive" style="max-height:300px; overflow-y:auto;">
+                <table>
+                    <thead><tr><th>Game</th><th>Success</th><th>Already</th><th>Failed</th></tr></thead>
+                    <tbody id="modalAnalyticsBody">
+                        <tr><td colspan="4" style="color:#64748b;">Awaiting context...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="temp-errors">
+            <div class="table-responsive" style="max-height:300px; overflow-y:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:22%;">Timestamp (IST)</th>
+                            <th style="width:20%;">Phone Number</th>
+                            <th style="width:20%;">Target Game</th>
+                            <th style="text-align:left;">Error Trigger Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalErrorLogsTableBody">
+                        <tr><td colspan="4" style="color:#64748b; text-align:center;">No error signatures captured.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="temp-health">
+            <div class="health-grid">
+                <div class="health-box"><div class="health-node-title">Cloud Network Link</div><div class="health-node-state" id="modalHealthNet" style="color:#22c55e;">Connected</div></div>
+                <div class="health-box"><div class="health-node-title">OTP Gateway Server</div><div class="health-node-state" id="modalHealthSim" style="color:#22c55e;">Connected</div></div>
+                <div class="health-box"><div class="health-node-title">SPYEYE Central Core</div><div class="health-node-state" id="modalHealthSPYEYE" style="color:#22c55e;">Connected</div></div>
+            </div>
+        </div>
+
+        <div id="temp-game-sequence">
+            <div style="color:#94a3b8; font-size:12px; margin-bottom:12px;">Enable the games you want to use, then arrange their order. Saved settings remain active until you change them and save again.</div>
+
+            <div style="margin-bottom:12px; padding:10px; background:#0b1220; border:1px solid #1e293b; border-radius:8px;">
+                <label style="display:block; color:#94a3b8; font-size:12px; margin-bottom:6px;">Primary Game</label>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <select id="primaryGameSelect" style="flex:1; margin:0; width:100%;"></select>
+                    <button type="button" class="btn" style="width:auto; margin:0; background:#2563eb; color:white;" data-action="save-primary-game">💾 Save</button>
+                </div>
+                <div id="primaryGameStatus" style="font-size:12px; min-height:16px; margin-top:6px;"></div>
+            </div>
+            <div id="gameSequenceList" style="display:flex; flex-direction:column; gap:7px; margin-bottom:12px;"></div>
+            <div id="gameSequenceStatus" style="font-size:12px; min-height:18px; margin-bottom:8px;"></div>
+            <button class="btn" style="width:100%; background:#059669; color:white;" onclick="saveGameSequence()">💾 Save Game Sequence</button>
+        </div>
+
+        <div id="temp-server-history">
+            <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; background: #070d17; padding: 12px; border-radius: 8px; border: 1px solid #18253d;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="margin:0;">Date:</label>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <select id="spyeyeDateFilterSelect" onchange="changeSpyEyeDateFilter()" style="margin-bottom:0; width: 110px; padding: 8px;">
+                            <option value="all">All</option>
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="date">Date</option>
+                        </select>
+                        <button id="spyeyeTodayBtn" class="btn" style="width: auto; margin:0; padding: 8px 12px; font-size: 12px; background: #1e293b;" onclick="setSpyEyeQuickDateFilter('today')">Today</button>
+                        <button id="spyeyeYesterdayBtn" class="btn" style="width: auto; margin:0; padding: 8px 12px; font-size: 12px; background: #1e293b;" onclick="setSpyEyeQuickDateFilter('yesterday')">Yesterday</button>
+                        <input type="date" id="spyeyeDatePickerInput" style="display: none; margin-bottom: 0; width: 140px; padding: 7px;" onchange="onSpyEyeDateSelected()">
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="margin:0;">Show Entries:</label>
+                    <select id="spyeyePageLimitSelect" onchange="changeSpyEyePageLimit()" style="margin-bottom:0; width: 100px; padding: 8px;">
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                        <option value="300">300</option>
+                        <option value="500">500</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="margin:0;">Order:</label>
+                    <select id="spyeyeSortOrderSelect" onchange="changeSpyEyeSortOrder()" style="margin-bottom:0; width: 125px; padding: 8px;">
+                        <option value="new_first">New First</option>
+                        <option value="old_first">Old First</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1; min-width: 220px;">
+                    <label style="margin:0;">Google Sheet Key:</label>
+                    <input type="text" id="spyeyeSheetKeyInput" placeholder="Enter Google Sheet Key" value="" style="margin-bottom:0; width:100%; text-align:left; padding:7px 10px; font-size:12px;">
+                </div>
+
+                <div style="display: flex; gap: 8px; align-items: flex-end; margin-top: auto;">
+                    <button class="btn" style="width: auto; margin:0; padding: 8px 14px; font-size: 12px; background: #0088ff;" onclick="syncSpyEyeHistory('current_page')">Sync Current Page</button>
+                    <button class="btn" style="width: auto; margin:0; padding: 8px 14px; font-size: 12px; background: #059669;" onclick="syncSpyEyeHistory('all_filtered')">Sync All Filtered Data</button>
+                </div>
+            </div>
+
+            <div id="spyeyeSyncStatus" style="margin-bottom: 10px; font-size: 12px; font-family: monospace; display: none;"></div>
+            <div id="spyeyeLiveSheetStatus" class="spyeye-live-sheet-status">
+                🟢 HISTORY SYNC: SPYEYE History → Google Sheet
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>APP NAME</th>
+                            <th>DEVICE ID</th>
+                            <th>BALANCE</th>
+                            <th>PHONE</th>
+                            <th>PASSWORD</th>
+                            <th>DATE</th>
+                            <th>UID</th>
+                            <th>GID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="serverHistoryTableBody">
+                        <tr><td colspan="8" style="color:#64748b; text-align:center;">Loading SPYEYE server history.....</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="serverHistoryCardsWrapper"></div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; flex-wrap: wrap; gap: 10px;">
+                <div id="spyeyePaginationInfo" style="font-size: 11px; color: #8a9bb2; font-family: monospace;">Showing 0-0 of 0</div>
+                <div id="spyeyePaginationControls" style="display: flex; gap: 5px; align-items: center;"></div>
+            </div>
+        </div>
+
+        <div id="temp-otp-history">
+            <div id="otpHistoryTablesWrapper">
+                <p style="color:#64748b; text-align:center; padding:15px;">Loading Number-Wise OTP History...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="content" id="content-workspace">
+
+        <div id="homeSection" class="app-section">
+            <!-- Engine status -->
+            <section class="home-status-card">
+                <div class="home-section-head">
+                    <div class="home-section-title"><span class="home-title-icon">🚀</span><span>ENGINE OPERATIONAL STATUS</span></div>
+                    <div class="home-ready-pill"><span></span>SYSTEM READY</div>
+                </div>
+                <div class="home-state-row">
+                    <div>
+                        <h2 id="engineState">Ready to Start</h2>
+                        <h4 id="engineEta">ETA : ---</h4>
+                    </div>
+                </div>
+                <div class="home-progress-row">
+                    <div class="progress"><div class="progress-fill" id="engineProgressBar"></div></div>
+                    <b>100%</b>
+                </div>
+            </section>
+
+            <!-- Provider balances: keep all four cards on one row -->
+            <div class="home-balance-grid">
+                <div class="home-bal-card home-bal-blue">
+                    <div class="home-bal-icon">▣</div>
+                    <div class="home-bal-title">4S BAL</div>
+                    <div class="home-bal-value" id="homeGatewayBalance">₹--</div>
+                    <span class="home-bal-arrow">›</span>
+                </div>
+                <div class="home-bal-card home-bal-green">
+                    <div class="home-bal-icon">♧</div>
+                    <div class="home-bal-title">OD BAL</div>
+                    <div class="home-bal-value" id="homeOtpDoctorBalance">₹--</div>
+                    <span class="home-bal-arrow">›</span>
+                </div>
+                <div class="home-bal-card home-bal-purple">
+                    <div class="home-bal-icon">▤</div>
+                    <div class="home-bal-title">TO BAL</div>
+                    <div class="home-bal-value" id="homeTempOtpBalance">₹--</div>
+                    <span class="home-bal-arrow">›</span>
+                </div>
+                <div class="home-bal-card home-bal-cyan">
+                    <div class="home-bal-icon">◉</div>
+                    <div class="home-bal-title">TS BAL</div>
+                    <div class="home-bal-value" id="homeTemporaSmsBalance">₹--</div>
+                    <span class="home-bal-arrow">›</span>
+                </div>
+                <div class="home-bal-card home-bal-orange" onclick="openSpyEyeAccountModal()" style="cursor:pointer;">
+                    <div class="home-bal-icon">●</div>
+                    <div class="home-bal-title">SE BAL</div>
+                    <div class="home-bal-value" id="homeSpyEyeCredits">₹--</div>
+                    <span class="home-bal-arrow">›</span>
+                </div>
+            </div>
+
+            <!-- Engine controls -->
+            <section class="home-engine-card">
+                <div class="home-engine-head">
+                    <div class="home-section-title"><span class="home-title-icon">⚙</span><div><b>ENGINE CONTROL UNIT</b><small>Configure and control automation engine</small></div></div>
+                    <div class="home-ready-pill"><span></span>ENGINE READY</div>
+                </div>
+
+                <div class="home-engine-body home-engine-refgrid">
+                    <div class="home-engine-icon-rail">
+                        <div>▤</div>
+                        <div>♣</div>
+                        <div>ϟ</div>
+                        <div>#</div>
+                    </div>
+
+                    <div class="home-control-row home-provider-row">
+                        <div class="home-field-wrap">
+                            <label for="providerInput">GATEWAY PROVIDER</label>
+                            <select id="providerInput" onchange="toggleProviderFields()">
+                                <option value="4sim">4Sim Gateway</option>
+                                <option value="otpdoctor">OTPDoctor Service</option>
+                                <option value="tempotp">TempOTP Service</option>
+                                <option value="temporasms">TemporaSMS Service</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="home-control-row home-target-row">
+                        <div class="home-field-wrap"><label for="targetInput">TARGET ACCOUNTS</label><input type="number" id="targetInput" value="20" min="1"></div>
+                        <div class="home-summary-box home-summary-blue"><small>Success OTP</small><b id="homeSuccessOtp">0</b></div>
+                    </div>
+                    <div class="home-control-row home-thread-row">
+                        <div class="home-field-wrap"><label for="threadInput">PARALLEL CONCURRENT THREADS</label><input type="number" id="threadInput" value="5" min="1"></div>
+                        <div class="home-summary-box home-summary-green"><small>Active Worker</small><b id="homeActiveWorker">0</b></div>
+                    </div>
+                    <div class="home-control-row home-service-row" id="standardServiceFields">
+                        <div class="home-service-inputs">
+                            <div class="home-field-wrap"><label for="serviceIdInput">SERVICE ID</label><input type="text" id="serviceIdInput" value="1929"></div>
+                            <div class="home-field-wrap home-temporasms-operator" id="temporasmsFields" style="display:none;"><label for="temporasmsOperatorInput">OPERATOR</label><input type="text" id="temporasmsOperatorInput" value="10" placeholder="10" autocomplete="off"></div>
+                        </div>
+                        <div class="home-summary-box home-summary-purple"><small>Secure Num</small><b id="homeSecureNum">0</b></div>
+                    </div>
+                </div>
+
+                <div class="home-engine-actions">
+                    <button class="btn btn-start" onclick="startEnginePipeline()"><span>▶</span><strong>Launch Automation</strong><small>Start processing pipeline</small></button>
+                    <button class="btn btn-stop" onclick="stopEnginePipeline()"><span>■</span><strong>Initiate Graceful Stop</strong><small>Stop after current tasks</small></button>
+                </div>
+
+                <div class="home-engine-note">
+                    <div class="home-note-info">i</div>
+                    <div><b>System will process 20 accounts with 5 parallel threads</b><small>using the selected gateway service</small></div>
+                    <div class="home-note-safe"><span>✓</span><div><b>Safe &amp; Controlled</b><small>Graceful stop supported</small></div></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Mobile LIVE Section Only -->
+        <div id="liveSection" class="app-section" style="display:none;">
+            <div class="dashboard-top" style="grid-template-columns:1fr;">
+                <section class="card live-runtime-card">
+                    <div class="live-runtime-heading">
+                        <span class="live-runtime-accent"></span>
+                        <div>
+                            <h3>📊 LIVE RUNTIME ANALYTICS</h3>
+                        </div>
+                        <span class="live-runtime-pattern" aria-hidden="true"></span>
+                    </div>
+
+                    <div class="analytics-grid live-analytics-grid">
+                        <div class="analytics-card analytics-blue">
+                            <div class="analytics-copy"><div class="analytics-title">SESSION TARGET</div><div class="analytics-value" id="lblTarget">0</div></div>
+                            <div class="analytics-icon">◯</div>
+                        </div>
+
+                        <div class="analytics-card analytics-cyan">
+                            <div class="analytics-copy"><div class="analytics-title">TOTAL THREAD</div><div class="analytics-value" id="lblThreads">0</div></div>
+                            <div class="analytics-icon">⚙</div>
+                        </div>
+
+                        <div class="analytics-card analytics-purple">
+                            <div class="analytics-copy"><div class="analytics-title">SECURED STOCK</div><div class="analytics-value" id="lblSecured">0</div></div>
+                            <div class="analytics-icon">▣</div>
+                        </div>
+
+                        <div class="analytics-card analytics-green clickable" onclick="openPopup('success', '✅ Success OTP Repository')">
+                            <div class="analytics-copy"><div class="analytics-title">SUCCESS OTPS</div><div class="analytics-value" id="lblSuccess">0</div></div>
+                            <div class="analytics-icon">✓</div>
+                        </div>
+
+                        <div class="analytics-card analytics-orange clickable" onclick="openPopup('already', '⚠️ Already Delayed Queue')">
+                            <div class="analytics-copy"><div class="analytics-title">ALREADY REG</div><div class="analytics-value" id="lblAlready">0</div></div>
+                            <div class="analytics-icon">☷</div>
+                        </div>
+
+                        <div class="analytics-card analytics-red clickable" onclick="openPopup('cancel', '❌ Cancelled Repository')">
+                            <div class="analytics-copy"><div class="analytics-title">CANCELLED LOGS</div><div class="analytics-value" id="lblCancelled">0</div></div>
+                            <div class="analytics-icon">×</div>
+                        </div>
+
+                        <div class="analytics-card analytics-blue clickable" onclick="openPopup('stream', '🔄 Realtime Active Thread')">
+                            <div class="analytics-copy"><div class="analytics-title">REALTIME ACTIVE</div><div class="analytics-value" id="lblRealtimeActive">0</div></div>
+                            <div class="analytics-icon">ϟ</div>
+                        </div>
+
+                        <div class="analytics-card analytics-pink clickable" onclick="openPopup('already', '⚠️ Already Delayed Queue')">
+                            <div class="analytics-copy"><div class="analytics-title">REALTIME ALREADY</div><div class="analytics-value" id="lblRealtimeAlready">0</div></div>
+                            <div class="analytics-icon">⟳</div>
+                        </div>
+
+                        <div class="analytics-card analytics-red clickable" onclick="openPopup('cancel-failed', '⚠️ Cancel Failed Logs')">
+                            <div class="analytics-copy"><div class="analytics-title">CANCEL FAILED</div><div class="analytics-value" id="lblCancelFailed">0</div></div>
+                            <div class="analytics-icon">⌁</div>
+                        </div>
+
+                        <div class="analytics-card analytics-yellow clickable" onclick="openPopup('delayed-cancel', '⏳ Delayed Cancel Queue')">
+                            <div class="analytics-copy"><div class="analytics-title">DELAYED CANCEL QUEUE</div><div class="analytics-value" id="lblDelayedCancel">0</div></div>
+                            <div class="analytics-icon">◷</div>
+                        </div>
+
+                        <div class="analytics-card analytics-blue">
+                            <div class="analytics-copy"><div class="analytics-title" id="lblGatewayTitle">🌐 OD BAL</div><div class="analytics-value" id="lblGatewayBalance">₹--</div></div>
+                            <div class="analytics-icon">◎</div>
+                        </div>
+
+                        <div class="analytics-card analytics-yellow clickable spyeye-analytics-card" onclick="openSpyEyeAccountModal()">
+                            <div class="analytics-copy"><div class="analytics-title">🔑 SPYEYE API BALANCE</div><div class="analytics-value" id="lblSpyEyeCredits">₹--</div></div>
+                            <div class="analytics-icon">◆</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module" src="/mobile/js/app.js?v=20260910-realtime-compact-v5"></script>
+</body>
+</html>
