@@ -1,15 +1,15 @@
 # API Keys
-FOUR_SIM_API_KEY = "52c0b4799f07c15cf5a3e2ffde329a29"
-OTPDOCTOR_API_KEY = "etykgs81yei5w3zzj0r3gpkob2dpw8pu"
-TEMPOTP_API_KEY = "ce281f8ca8910e6b50808d11a87c1"
+FOUR_SIM_API_KEY = "14e85c47b09e50a92a2239e6aea7a481"
+OTPDOCTOR_API_KEY = "9o8nv46avmnc5y4g87gc6rypndemfhbn"
+TEMPOTP_API_KEY = "74a2d7337a50ef729e17419a6165d341"
 TEMPORASMS_API_KEY = "4886507db9a85fe9352c0eef83f5bbbd43"
 
 # SpyEye
 BASE_URL = "https://spyeyeloots3.online/up_yono/"
 
 # License
-LICENSE_KEY = "LF-SUMANTA-001"
-SPYEYE_API_KEY = "TBRSUMANTHA1212"
+LICENSE_KEY = "LF-SUMANTA-002"
+SPYEYE_API_KEY = "TBRASAHUREG2993"
 SECRET_KEY = "7a5d8fda4b2e9c4d"
 LICENSE_SERVER = "https://spyeye-cv4o.onrender.com/api/check-license"
 
