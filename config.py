@@ -8,8 +8,8 @@ TEMPORASMS_API_KEY = "ad74bdcf858b8324973ea4a0f03504067877"
 BASE_URL = "https://spyeyeloots3.online/up_yono/"
 
 # License
-LICENSE_KEY = "LF-AMIT-001"
-SPYEYE_API_KEY = "TBRSUMANTHA1205"
+LICENSE_KEY = "LF-AMIT-002"
+SPYEYE_API_KEY = "TBRSAHUREG2993"
 SECRET_KEY = "7a5d8fda4b2e9c4d"
 LICENSE_SERVER = "https://spyeye-cv4o.onrender.com/api/check-license"
 
