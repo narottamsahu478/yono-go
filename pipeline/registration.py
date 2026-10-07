@@ -331,7 +331,7 @@ async def process_single_registration():
         "completion_lock": asyncio.Lock(),
         "otp_received_anywhere": False,
     }
-    provider_threshold = None if globals.global_provider == "temporasms" else (5 if globals.global_provider == "otpdoctor" and str(globals.global_service_id) in {"9776", "16905"} else (6 if globals.global_provider == "otpdoctor" else 5))
+    provider_threshold = None if globals.global_provider == "temporasms" else (6 if globals.global_provider == "otpdoctor" else 5)
 
     async with globals.buy_lock:
         if (
