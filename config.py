@@ -9,7 +9,7 @@ BASE_URL = "https://spyeyeloots4.online/up_yonoV3/"
 
 # License
 LICENSE_KEY = "LF-AMIT-001"
-SPYEYE_API_KEY = "TBRSAHUREG2994"
+SPYEYE_API_KEY = "TBRSAHUREG2995"
 SECRET_KEY = "7a5d8fda4b2e9c4d"
 LICENSE_SERVER = "https://spyeye-cv4o.onrender.com/api/check-license"
 
