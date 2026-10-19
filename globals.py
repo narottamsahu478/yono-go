@@ -81,6 +81,8 @@ stop_event = asyncio.Event()
 
 
 # ---------- Cancellation Tracking ----------
+cancel_session_id = None
+
 logged_cancels = set()
 active_already_tasks = set()
 delayed_cancel_tasks = set()
@@ -103,3 +105,5 @@ global_otpdoctor_api_key = OTPDOCTOR_API_KEY
 global_tempotp_api_key = TEMPOTP_API_KEY
 global_temporasms_api_key = TEMPORASMS_API_KEY
 global_temporasms_operator = "10"
+# Serialize cancellation API calls across provider contexts.
+cancel_worker_lock = asyncio.Lock()

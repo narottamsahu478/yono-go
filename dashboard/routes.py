@@ -651,6 +651,26 @@ async def api_start(request: Request):
     return {"status": "success"}
 
 
+@router.get("/api/service-id")
+async def get_live_service_id():
+    return {"service_id": str(globals.global_service_id), "provider": str(globals.global_provider)}
+
+
+@router.post("/api/service-id")
+async def update_live_service_id(request: Request):
+    data = await request.json()
+    service_id = str(data.get("service_id", "")).strip()
+    if not service_id or len(service_id) > 64 or not all(c.isalnum() or c in "_-" for c in service_id):
+        raise HTTPException(status_code=400, detail="Invalid service ID")
+    # New purchases snapshot this value while holding buy_lock.
+    async with globals.buy_lock:
+        previous = str(globals.global_service_id)
+        globals.global_service_id = service_id
+        globals.global_otpdoctor_service_id = service_id
+    return {"success": True, "previous_service_id": previous, "service_id": service_id,
+            "message": "New number purchases will use the updated service ID."}
+
+
 @router.post("/api/stop")
 async def api_stop():
     globals.stop_event.set()
@@ -711,6 +731,33 @@ async def api_logs(
     end_num = min(end_idx, total)
 
     response_data = dict(globals.live_stats)
+    # Combine the existing in-memory cancellation results with durable worker
+    # confirmations. The memory list is reset at the start of each session.
+    from utils.cancel_registry import session_cancelled, session_transactions
+    session_id = globals.cancel_session_id
+    confirmed = session_cancelled(session_id)
+    allowed = session_transactions(session_id)
+    memory_logs = response_data.get('cancel_logs', [])
+    if not isinstance(memory_logs, list):
+        memory_logs = []
+    def _cancel_key(item):
+        return (str(item.get('provider', '')).strip().lower(),
+                str(item.get('txn_id', '')).strip())
+    def _released(item):
+        return str(item.get('status', '')).strip().lower() in ('released', 'cancelled')
+    # Only transactions purchased in the current session can be counted.
+    # Memory events from the current session are also valid if the registry
+    # record was not updated yet, but must have a matching purchase record.
+    by_key = {_cancel_key(item): item for item in confirmed if _cancel_key(item)[1]}
+    for item in memory_logs:
+        key = _cancel_key(item)
+        if key in allowed and _released(item):
+            by_key.setdefault(key, item)
+    failures = [item for item in memory_logs
+                if not _released(item) and _cancel_key(item) in allowed
+                and _cancel_key(item) not in by_key]
+    response_data['cancelled_orders'] = len(by_key)
+    response_data['cancel_logs'] = (list(by_key.values()) + failures)[:200]
     response_data["success_records"] = paginated_slice
     response_data["pagination"] = {
         "page": page,

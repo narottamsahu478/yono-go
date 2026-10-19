@@ -331,16 +331,6 @@ async def process_single_registration():
         "completion_lock": asyncio.Lock(),
         "otp_received_anywhere": False,
     }
-    if globals.global_provider == "temporasms":
-        provider_threshold = None
-    elif globals.global_provider == "otpdoctor":
-        # OTPDoctor normally completes after 6 registrations.
-        # Service IDs 9776 and 16905 complete after 5 registrations.
-        otpdoctor_service_id = str(globals.global_service_id).strip()
-        provider_threshold = 5 if otpdoctor_service_id in {"9776", "16905"} else 6
-    else:
-        provider_threshold = 5
-
     async with globals.buy_lock:
         if (
             globals.stop_event.is_set()
@@ -350,12 +340,21 @@ async def process_single_registration():
         async with globals.stats_lock:
             globals.live_stats["system_status"] = "Securing Stock..."
 
+        # Snapshot per purchase: in-flight numbers keep their original service.
+        service_id_for_number = str(globals.global_service_id).strip()
+        if globals.global_provider == "temporasms":
+            provider_threshold = None
+        elif globals.global_provider == "otpdoctor":
+            provider_threshold = 5 if service_id_for_number in {"9776", "16905"} else 6
+        else:
+            provider_threshold = 5
+
         try:
             txn_id = None
             phone = None
             async with aiohttp.ClientSession() as session:
                 if globals.global_provider == "otpdoctor":
-                    buy_url = f"https://otpdoctor.in/stubs/handler_api.php?action=getNumber&api_key={globals.global_otpdoctor_api_key}&service={globals.global_service_id}"
+                    buy_url = f"https://otpdoctor.in/stubs/handler_api.php?action=getNumber&api_key={globals.global_otpdoctor_api_key}&service={service_id_for_number}"
                     async with session.get(buy_url, timeout=12) as response:
                         raw_text = (await response.text()).strip()
                         if raw_text.startswith("ACCESS_NUMBER:"):
@@ -370,7 +369,7 @@ async def process_single_registration():
                     # specific extra field.
                     raw_text = await provider.buy_number(
                         session,
-                        globals.global_service_id,
+                        service_id_for_number,
                         "22",
                         globals.global_temporasms_operator,
                     )
@@ -382,7 +381,7 @@ async def process_single_registration():
 
                 elif globals.global_provider == "tempotp":
                     provider = TempOTPProvider(TEMPOTP_API_KEY)
-                    buy_res = await provider.buy_number(session, globals.global_service_id, "22")
+                    buy_res = await provider.buy_number(session, service_id_for_number, "22")
                     # TEMPOTP response fields are normalized here so minor API
                     # response-shape changes do not break the registration flow.
                     def _find_value(obj, keys):
@@ -408,7 +407,7 @@ async def process_single_registration():
                     if txn_id is not None:
                         txn_id = str(txn_id)
                 else:
-                    buy_url = f"https://api.4sim.st/buyNumber?apikey={FOUR_SIM_API_KEY}&id={globals.global_service_id}&country=22"
+                    buy_url = f"https://api.4sim.st/buyNumber?apikey={FOUR_SIM_API_KEY}&id={service_id_for_number}&country=22"
                     async with session.get(buy_url, timeout=12) as response:
                         buy_res = await response.json()
                         phone = str(buy_res.get("number", ""))[-10:]
@@ -416,6 +415,8 @@ async def process_single_registration():
 
             if not phone:
                 return
+            from utils.cancel_registry import register as register_activation
+            register_activation(globals.global_provider, txn_id, phone)
             globals.success_buy_count += 1
             globals.active_task_counter += 1
         except Exception:
@@ -743,6 +744,8 @@ async def dynamic_pipeline_runner(semaphore):
 
 
 async def core_engine_orchestrator(target, threads):
+    import uuid
+    globals.cancel_session_id = uuid.uuid4().hex
     globals.success_buy_count = 0
     globals.active_task_counter = 0
     globals.background_active_tasks = 0

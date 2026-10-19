@@ -33,7 +33,13 @@ async def lifespan(app: FastAPI):
     # background tracker refreshes balances only while the pipeline is running.
     await fetch_all_balances_once()
     asyncio.create_task(live_balances_tracker_loop())
-    yield
+    from utils.cancel_worker import run_cancel_worker
+    cancel_worker_task = asyncio.create_task(run_cancel_worker())
+    try:
+        yield
+    finally:
+        cancel_worker_task.cancel()
+        await asyncio.gather(cancel_worker_task, return_exceptions=True)
 
 app = FastAPI(lifespan=lifespan)
 

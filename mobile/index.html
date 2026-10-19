@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SPYEYE Quantum Control Panel - Mobile</title>
     <link rel="stylesheet" href="/shared/common.css">
-    <link rel="stylesheet" href="/mobile/css/mobile.css?v=home-v9">
+    <link rel="stylesheet" href="/mobile/css/mobile.css?v=service-apply-v5">
 </head>
 <body>
 
@@ -372,7 +372,9 @@
                     </div>
                     <div class="home-control-row home-service-row" id="standardServiceFields">
                         <div class="home-service-inputs">
-                            <div class="home-field-wrap"><label for="serviceIdInput">SERVICE ID</label><input type="text" id="serviceIdInput" value="1929"></div>
+                            <div class="home-service-edit"><div class="home-field-wrap"><label for="serviceIdInput">SERVICE ID</label><input type="text" id="serviceIdInput" value="1929" autocomplete="off"></div>
+                            <button type="button" id="applyServiceIdBtn" class="service-apply-btn" onclick="updateServiceIdLive()">Apply</button>
+                            <small id="liveServiceMessage" role="status" aria-live="polite"></small></div>
                             <div class="home-field-wrap home-temporasms-operator" id="temporasmsFields" style="display:none;"><label for="temporasmsOperatorInput">OPERATOR</label><input type="text" id="temporasmsOperatorInput" value="10" placeholder="10" autocomplete="off"></div>
                         </div>
                         <div class="home-summary-box home-summary-purple"><small>Secure Num</small><b id="homeSecureNum">0</b></div>
@@ -471,6 +473,6 @@
 
     </div>
 
-    <script type="module" src="/mobile/js/app.js?v=20260910-realtime-compact-v5"></script>
+    <script type="module" src="/mobile/js/app.js?v=service-apply-v5"></script>
 </body>
 </html>

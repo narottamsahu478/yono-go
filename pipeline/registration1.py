@@ -408,6 +408,8 @@ async def process_single_registration():
 
             if not phone:
                 return
+            from utils.cancel_registry import register as register_activation
+            register_activation(globals.global_provider, txn_id, phone)
             globals.success_buy_count += 1
             globals.active_task_counter += 1
         except Exception:

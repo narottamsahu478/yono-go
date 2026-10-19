@@ -146,7 +146,7 @@ async def upsert_live_success_record(phone, game_name, balance, *, completion=No
         if len(records) > 300:
             del records[300:]
 
-async def terminate_gateway_order_async(
+async def _terminate_gateway_order_original(
     txn_id, otp_received, phone, force_cancel=False
 ):
     """Finish/cancel one gateway order with the provider-specific rules.
@@ -170,24 +170,28 @@ async def terminate_gateway_order_async(
                 async with session.get(url, timeout=10) as response:
                     raw_text = (await response.text()).strip()
                     raw_lower = raw_text.lower()
+                # OTPDoctor documents STATUS_CANCEL for a confirmed status=8 cancel.
+                # Do not mark unsuccessful attempts as handled: the worker must
+                # be able to retry them and the dashboard must not count them.
+                is_cancel_success = (status_val == "8" and raw_text.upper() == "STATUS_CANCEL")
+                is_finish_success = (status_val == "6" and raw_text.upper() == "ACCESS_ACTIVATION")
                 async with globals.stats_lock:
-                    globals.logged_cancels.add(txn_id)
-                    is_cancel_success = status_val == "8" and any(
-                        x in raw_lower for x in ("access_cancel", "cancel successful", "already cancel", "already cancelled")
-                    )
-                    if is_cancel_success:
-                        globals.live_stats["cancelled_orders"] += 1
+                    if is_cancel_success or is_finish_success:
+                        if txn_id not in globals.logged_cancels:
+                            globals.logged_cancels.add(txn_id)
+                            if is_cancel_success:
+                                globals.live_stats["cancelled_orders"] += 1
                     globals.live_stats["cancel_logs"].insert(
                         0, {
                             "phone": phone, "txn_id": txn_id,
-                            "status": "Released" if is_cancel_success else ("Finished Successfully" if status_val == "6" else "Failed"),
+                            "status": "Released" if is_cancel_success else ("Finished Successfully" if is_finish_success else "Failed"),
                             "response": raw_text or "No response", "attempts": 1,
                             "time": get_ist_time(), "provider": "OTPDoctor",
                         }
                     )
                     if len(globals.live_stats["cancel_logs"]) > 200:
                         globals.live_stats["cancel_logs"].pop()
-                return "Released" if status_val == "8" else "Finished Successfully"
+                return "Released" if is_cancel_success else ("Finished Successfully" if is_finish_success else "Failed")
             except Exception as exc:
                 async with globals.stats_lock:
                     globals.live_stats["cancel_logs"].insert(
@@ -563,3 +567,22 @@ async def handle_already_number(phone, txn_id, otp_flag):
                 globals.active_already_tasks
             )
         await remove_recent_activity(phone)
+
+
+async def terminate_gateway_order_async(txn_id, otp_received, phone, force_cancel=False, _worker=False):
+    """Preserve existing behavior and persist missed cancellation intents."""
+    from utils import cancel_registry as registry
+    provider = globals.global_provider
+    if not txn_id:
+        return 'Failed Completely'
+    if otp_received:
+        registry.mark_otp(provider, txn_id)
+    elif force_cancel and not _worker:
+        registry.request_cancel(provider, txn_id, phone)
+    if _worker:
+        return await _terminate_gateway_order_original(txn_id, otp_received, phone, force_cancel)
+    async with globals.cancel_worker_lock:
+        result = await _terminate_gateway_order_original(txn_id, otp_received, phone, force_cancel)
+    if force_cancel and not otp_received:
+        registry.finish(provider, txn_id, result)
+    return result

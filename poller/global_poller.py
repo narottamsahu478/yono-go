@@ -174,6 +174,8 @@ async def route_global_otp(
 
         try:
             track_data["otp_received"] = True
+            from utils.cancel_registry import mark_otp
+            mark_otp(globals.global_provider, txn_id)
 
             await update_live_status(
                 phone, f"Global Route {otp} -> {ui_name}", progress_val=70

@@ -803,6 +803,41 @@ function startEnginePipeline() {
     });
 }
 
+async function updateServiceIdLive() {
+    const input = document.getElementById('serviceIdInput');
+    const message = document.getElementById('liveServiceMessage');
+    const button = document.getElementById('applyServiceIdBtn');
+    const service_id = (input?.value || '').trim();
+    if (!service_id || !/^[a-zA-Z0-9_-]{1,64}$/.test(service_id)) {
+        if (message) message.textContent = 'Enter a valid Service ID';
+        return;
+    }
+    if (button?.disabled) return;
+    if (button) { button.disabled = true; button.textContent = 'Saving'; }
+    if (message) { message.textContent = 'Applying...'; message.style.color = '#8dd9ff'; }
+    try {
+        const response = await fetch('/api/service-id', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({service_id}),
+            cache: 'no-store'
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.detail || data.message || 'Update failed');
+        // Read back the effective service ID rather than trusting only the POST result.
+        const check = await fetch('/api/service-id', {cache:'no-store'});
+        if (!check.ok) throw new Error('Saved, but could not verify the current Service ID');
+        const current = await check.json();
+        if (String(current.service_id) !== service_id) throw new Error('Service ID verification mismatch');
+        if (message) { message.textContent = `Applied: ${service_id} · next purchases`; message.style.color = '#42e5af'; }
+    } catch (err) {
+        if (message) { message.textContent = `Error: ${err.message}`; message.style.color = '#ff8b9b'; }
+    } finally {
+        if (button) { button.disabled = false; button.textContent = 'Apply'; }
+    }
+}
+window.updateServiceIdLive = updateServiceIdLive;
+
 function stopEnginePipeline() { api.stopEngine(); }
 
 function setDashboardText(id, value) {
@@ -885,16 +920,10 @@ function updateDashboard(data) {
     setDashboardText("homeSuccessOtp", Number(data.success_otps || 0));
     setDashboardText("homeActiveWorker", Number(data.realtime_active_threads || 0));
     setDashboardText("homeSecureNum", Number(data.total_secured || 0));
-    // Cancelled Logs card is driven by the actual successful release entries,
-    // so it updates even if a provider-specific counter was not incremented.
-    const cancelLogs = Array.isArray(data.cancel_logs) ? data.cancel_logs : [];
-    const cancelledKeys = new Set(
-        cancelLogs
-            .filter(item => /^(Released|Cancelled)$/i.test(String(item.status || '')))
-            .map(item => String(item.txn_id || item.phone || ''))
-            .filter(Boolean)
-    );
-    setDashboardText("lblCancelled", cancelledKeys.size || Number(data.cancelled_orders || 0));
+    // Use the backend's session-wide confirmed cancellation total. The
+    // cancel_logs array is intentionally capped at 200 recent entries and
+    // must never be used as the lifetime-of-session counter.
+    setDashboardText("lblCancelled", Number(data.cancelled_orders || 0));
     setDashboardText("lblRealtimeActive", data.realtime_active_threads || 0);
     setDashboardText("lblRealtimeAlready", data.realtime_already_logs || 0);
     // Keep the counters semantically separate: confirmed releases belong to

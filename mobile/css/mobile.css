@@ -2384,3 +2384,13 @@
     align-self:stretch !important;
   }
 }
+
+/* Compact live service-ID editor: match existing dark dashboard */
+.home-engine-refgrid .home-service-inputs .home-service-edit{display:grid;grid-template-columns:minmax(0,1fr) 78px;column-gap:8px;row-gap:5px;align-items:end;min-width:0;width:100%;}
+.home-engine-refgrid .home-service-edit .home-field-wrap{min-width:0;}
+.home-engine-refgrid .home-service-edit .service-apply-btn{height:38px;min-height:38px;width:78px;min-width:0;padding:0 8px;border:1px solid #38aaff;border-radius:10px;background:linear-gradient(180deg,#129df2,#0674cb);color:#fff;font-size:12px;font-weight:800;line-height:1;white-space:nowrap;cursor:pointer;box-shadow:0 3px 12px rgba(0,137,255,.18);}
+.home-engine-refgrid .home-service-edit .service-apply-btn:hover:not(:disabled){background:#168fea;}
+.home-engine-refgrid .home-service-edit .service-apply-btn:disabled{opacity:.55;cursor:wait;}
+.home-engine-refgrid .home-service-edit #liveServiceMessage{grid-column:1/-1;display:block;min-height:0;font-size:11px;line-height:1.35;color:#8dd9ff;overflow-wrap:anywhere;}
+.home-engine-refgrid .home-service-inputs{grid-template-columns:minmax(0,1fr) !important;}
+.home-engine-refgrid .home-service-inputs:has(.home-temporasms-operator[style*="display: block"]){grid-template-columns:minmax(0,1fr) minmax(90px,.55fr) !important;}
