@@ -48,7 +48,11 @@ GAME_MAP = {
     "Rummy91": {"api": "rummy91", "ui": "Rummy91"},
     "RummyLudo": {"api": "rummyludo", "ui": "RummyLudo"},
     "YonoRummy": {"api": "yonorummy", "ui": "YonoRummy"},
-    "ShareSlots": {"api": "shareslots", "ui": "ShareSlots"}
+    "ShareSlots": {"api": "shareslots", "ui": "ShareSlots"},
+    "YesSpin": {"api": "yesspin", "ui": "YesSpin"},
+    "GoldRummy": {"api": "goldrummy", "ui": "GoldRummy"},
+    "TopRummy": {"api": "toprummy", "ui": "TopRummy"},
+    "JoyRummy": {"api": "joyrummy", "ui": "Joyrummy"}
 }
 
 API_TO_UI = {v["api"].lower(): v["ui"] for v in GAME_MAP.values()}
