@@ -308,7 +308,7 @@ async def safely_stop_poller(poller_stop_event, poller_task):
 async def process_single_registration():
     if (
         globals.stop_event.is_set()
-        or globals.success_buy_count >= globals.input_total_accounts
+        or globals.live_stats["successful_numbers"] >= globals.input_total_accounts
     ):
         return
 
@@ -334,7 +334,7 @@ async def process_single_registration():
     async with globals.buy_lock:
         if (
             globals.stop_event.is_set()
-            or globals.success_buy_count >= globals.input_total_accounts
+            or globals.live_stats["successful_numbers"] >= globals.input_total_accounts
         ):
             return
         async with globals.stats_lock:
@@ -604,6 +604,13 @@ async def process_single_registration():
     if main_res is True:
         async with globals.stats_lock:
             globals.live_stats["success_otps"] += 1
+            # Count this purchased phone number once, on primary success.
+            # Other games on the same phone must not increase the target.
+            globals.live_stats["successful_numbers"] += 1
+            if globals.live_stats["successful_numbers"] >= globals.input_total_accounts:
+                globals.live_stats["system_status"] = (
+                    "Target reached | No new purchases | Finishing active numbers..."
+                )
         if primary_game not in registered_games_list:
             success_chains_count[0] += 1
             registered_games_list.append(primary_game)
@@ -724,7 +731,7 @@ async def process_single_registration():
             },
         )
         globals.live_stats["progress"] = int(
-            (globals.success_buy_count / globals.input_total_accounts) * 100
+            (globals.live_stats["successful_numbers"] / globals.input_total_accounts) * 100
         )
         globals.live_stats["realtime_active_threads"] = max(
             0, globals.live_stats["realtime_active_threads"] - 1
@@ -736,7 +743,7 @@ async def process_single_registration():
 async def dynamic_pipeline_runner(semaphore):
     while (
         not globals.stop_event.is_set()
-        and globals.success_buy_count < globals.input_total_accounts
+        and globals.live_stats["successful_numbers"] < globals.input_total_accounts
     ):
         async with semaphore:
             await process_single_registration()
@@ -762,6 +769,7 @@ async def core_engine_orchestrator(target, threads):
         globals.live_stats["active_threads"] = threads
         globals.live_stats["pipeline_running"] = True
         globals.live_stats["success_otps"] = 0
+        globals.live_stats["successful_numbers"] = 0
         globals.live_stats["already_registered"] = 0
         globals.live_stats["cancelled_orders"] = 0
         globals.live_stats["cancel_logs"] = []
@@ -789,7 +797,7 @@ async def core_engine_orchestrator(target, threads):
 
     start_time = time.time()
     while (
-        globals.success_buy_count < globals.input_total_accounts
+        globals.live_stats["successful_numbers"] < globals.input_total_accounts
         and not globals.stop_event.is_set()
     ):
         async with globals.stats_lock:
@@ -801,10 +809,10 @@ async def core_engine_orchestrator(target, threads):
             )
 
             elapsed = time.time() - start_time
-            if globals.success_buy_count > 0:
-                avg_time = elapsed / globals.success_buy_count
+            if globals.live_stats["successful_numbers"] > 0:
+                avg_time = elapsed / globals.live_stats["successful_numbers"]
                 rem_acc = (
-                    globals.input_total_accounts - globals.success_buy_count
+                    globals.input_total_accounts - globals.live_stats["successful_numbers"]
                 )
                 eta_secs = int(avg_time * rem_acc)
                 globals.live_stats["eta"] = f"{eta_secs // 60}m {eta_secs % 60}s"
@@ -813,7 +821,9 @@ async def core_engine_orchestrator(target, threads):
 
     async with globals.stats_lock:
         globals.live_stats["system_status"] = (
-            "Stop Received. Completing active runs..."
+            "Target reached. Completing active runs..."
+            if globals.live_stats["successful_numbers"] >= globals.input_total_accounts
+            else "Stop Received. Completing active runs..."
         )
 
     await asyncio.gather(*workers, return_exceptions=True)
